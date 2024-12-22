@@ -2,7 +2,8 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config.settings import get_settings
-from .api.endpoints import generation, history
+from app.api.endpoints import generation, history
+from app.api.endpoints.auth import router as auth_router
 from .core.database import engine
 from .core.models.property import Base
 
@@ -38,7 +39,7 @@ app.add_middleware(
 )
 
 # Podpięcie routerów
-app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(generation.router, prefix="/api/v1", tags=["generation"])
 app.include_router(history.router, prefix="/api/v1", tags=["history"])
 

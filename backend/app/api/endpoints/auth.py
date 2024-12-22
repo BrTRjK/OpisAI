@@ -8,6 +8,14 @@ from app.core.security.password import verify_password, get_password_hash
 from app.core.models.user import User
 from app.core.schemas.user import UserCreate, User as UserSchema
 from app.core.database import get_db
+from jose import jwt, JWTError
+from app.core.security.jwt import (
+    create_access_token, 
+    verify_token, 
+    SECRET_KEY, 
+    ALGORITHM,
+    ACCESS_TOKEN_EXPIRE_MINUTES
+)
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
