@@ -6,6 +6,8 @@ from .api.endpoints import generation, history
 from .core.database import engine
 from .core.models.property import Base
 
+Base.metadata.create_all(bind=engine)
+
 # Konfiguracja logowania
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -36,6 +38,7 @@ app.add_middleware(
 )
 
 # Podpięcie routerów
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(generation.router, prefix="/api/v1", tags=["generation"])
 app.include_router(history.router, prefix="/api/v1", tags=["history"])
 
@@ -51,3 +54,7 @@ async def test_settings():
         "api_key_exists": bool(settings.OPENAI_API_KEY),
         "api_key_length": len(settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else 0
     }
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
