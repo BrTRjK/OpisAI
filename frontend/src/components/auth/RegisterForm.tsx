@@ -7,51 +7,57 @@ import {
   Input,
   VStack,
   useToast,
+  Text,
+  Alert,
+  AlertIcon,
 } from '@chakra-ui/react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../utils/api';
+import { useAuthStore } from '../../store/authStore';
 
-export const RegisterForm = () => {
-  const [email, setEmail] = React.useState('');
-  const [username, setUsername] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [confirmPassword, setConfirmPassword] = React.useState('');
-  const [isLoading, setIsLoading] = React.useState(false);
-
+export const LoginForm = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
   const navigate = useNavigate();
   const toast = useToast();
+  const setToken = useAuthStore(state => state.setToken);
+  const setUser = useAuthStore(state => state.setUser);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (password !== confirmPassword) {
-      toast({
-        title: 'Błąd',
-        description: 'Hasła nie są identyczne',
-        status: 'error',
-        duration: 5000,
-      });
-      return;
-    }
-
+    setError(null);
     setIsLoading(true);
 
     try {
-      await authApi.register(email, username, password);
+      const { access_token } = await authApi.login(email, password);
+      setToken(access_token);
+      
+      // Pobierz dane użytkownika
+      const userData = await authApi.getCurrentUser();
+      setUser(userData);
+
       toast({
-        title: 'Konto utworzone',
-        description: 'Możesz się teraz zalogować',
+        title: 'Zalogowano pomyślnie',
         status: 'success',
         duration: 3000,
       });
-      navigate('/login');
+      
+      navigate('/');
     } catch (error: any) {
-      toast({
-        title: 'Błąd rejestracji',
-        description: error.response?.data?.detail || 'Wystąpił błąd',
-        status: 'error',
-        duration: 5000,
-      });
+      // Sprawdź typ błędu
+      if (error.response?.status === 401) {
+        setError('Nieprawidłowy email lub hasło');
+      } else if (error.response?.status === 404) {
+        setError('Nie istnieje konto z podanym adresem email');
+      } else if (error.message === 'Network Error') {
+        setError('Problem z połączeniem z serwerem. Sprawdź czy backend jest uruchomiony.');
+      } else {
+        setError('Wystąpił nieoczekiwany błąd');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -60,20 +66,19 @@ export const RegisterForm = () => {
   return (
     <Box as="form" onSubmit={handleSubmit} width="100%" maxW="400px">
       <VStack spacing={4}>
+        {error && (
+          <Alert status="error" borderRadius="md">
+            <AlertIcon />
+            {error}
+          </Alert>
+        )}
+
         <FormControl isRequired>
           <FormLabel>Email</FormLabel>
           <Input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-          />
-        </FormControl>
-
-        <FormControl isRequired>
-          <FormLabel>Nazwa użytkownika</FormLabel>
-          <Input
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
           />
         </FormControl>
 
@@ -86,22 +91,13 @@ export const RegisterForm = () => {
           />
         </FormControl>
 
-        <FormControl isRequired>
-          <FormLabel>Potwierdź hasło</FormLabel>
-          <Input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-        </FormControl>
-
         <Button
           type="submit"
           colorScheme="blue"
           width="100%"
           isLoading={isLoading}
         >
-          Zarejestruj się
+          Zaloguj się
         </Button>
       </VStack>
     </Box>

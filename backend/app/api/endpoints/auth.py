@@ -47,6 +47,30 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/token")
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    # Sprawdź czy użytkownik istnieje
+    user = db.query(User).filter(User.email == form_data.username).first()
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="Nie istnieje konto z podanym adresem email"
+        )
+    
+    # Sprawdź hasło
+    if not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=401,
+            detail="Nieprawidłowe hasło",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.email}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/token")
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     # Autentykacja użytkownika
     user = db.query(User).filter(User.email == form_data.username).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
