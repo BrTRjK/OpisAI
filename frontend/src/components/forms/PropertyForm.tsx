@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Box,
   Button,
@@ -5,310 +6,218 @@ import {
   FormLabel,
   Input,
   Select,
-  Textarea,
+  NumberInput,
+  NumberInputField,
   VStack,
-  SimpleGrid,
-  useToast
+  Textarea,
+  Grid,
+  GridItem,
 } from '@chakra-ui/react';
-import axios from 'axios';
-import { useState } from 'react';
 
 interface PropertyFormProps {
-  onDescriptionGenerated?: () => void;
+  onSubmit: (data: any) => void;
+  isLoading?: boolean;
 }
 
-export default function PropertyForm({ onDescriptionGenerated }: PropertyFormProps) {
-  // Stan formularza
-  const [formData, setFormData] = useState({
-    propertyType: '',
-    offerType: '',
+export const PropertyForm = ({ onSubmit, isLoading = false }: PropertyFormProps) => {
+  const [formData, setFormData] = React.useState({
+    property_type: '',
+    offer_type: '',
     style: '',
     location: '',
     area: '',
     rooms: '',
     floor: '',
-    buildingType: '',
-    advertiserType: '',
-    yearBuilt: '',
-    marketType: '',
-    pricePerMeter: '',
-    buildingMaterial: '',
-    additionalInfo: ''
+    building_type: '',
+    developer_type: '',
+    construction_year: '',
+    market_type: '',
+    price_per_meter: '',
+    building_material: '',
+    additional_info: '',
   });
 
-  // Stany pomocnicze
-  const [isLoading, setIsLoading] = useState(false);
-  const [generatedDescription, setGeneratedDescription] = useState('');
-  const toast = useToast();
-
-  // Stałe
-  const propertyTypes = ['Działka', 'Dom', 'Mieszkanie', 'Inwestycje', 'Lokale użytkowe', 'Hale i magazyny'];
-  const offerTypes = ['Sprzedaż', 'Wynajem'];
-  const styles = ['Artystyczny', 'Innowacyjny', 'Klasyczny', 'Elegancki', 'Inwestycyjny'];
-  const marketTypes = ['Pierwotny', 'Wtórny'];
-
-  // Obsługa zmiany pól formularza
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Obsługa wysyłania formularza
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    const requestData = {
-      property_type: formData.propertyType,
-      offer_type: formData.offerType,
-      style: formData.style,
-      location: formData.location,
-      area: Number(formData.area),
-      rooms: formData.rooms ? Number(formData.rooms) : null,
-      floor: formData.floor,
-      building_type: formData.buildingType,
-      advertiser_type: formData.advertiserType,
-      year_built: formData.yearBuilt ? Number(formData.yearBuilt) : null,
-      market_type: formData.marketType,
-      price_per_meter: formData.pricePerMeter ? Number(formData.pricePerMeter) : null,
-      building_material: formData.buildingMaterial,
-      additional_info: formData.additionalInfo
-    };
-
-    try {
-      const response = await axios.post(
-        'http://localhost:8001/api/v1/generate', 
-        requestData
-      );
-
-      setGeneratedDescription(response.data.description);
-      
-      if (onDescriptionGenerated) {
-        onDescriptionGenerated();
-      }
-
-      toast({
-        title: 'Sukces!',
-        description: 'Pomyślnie wygenerowano opis nieruchomości.',
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Błąd!',
-        description: error.response?.data?.detail || 'Nie udało się wygenerować opisu',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    onSubmit(formData);
   };
 
   return (
-    <Box as="form" onSubmit={handleSubmit} p={6} borderRadius="lg" boxShadow="lg" bg="white">
-      <VStack spacing={6}>
-        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6} w="full">
+    <Box as="form" onSubmit={handleSubmit} width="100%">
+      <Grid templateColumns="repeat(2, 1fr)" gap={6}>
+        <GridItem>
           <FormControl isRequired>
             <FormLabel>Typ nieruchomości</FormLabel>
-            <Select
-              name="propertyType"
-              value={formData.propertyType}
-              onChange={handleInputChange}
-              placeholder="Wybierz typ nieruchomości"
-            >
-              {propertyTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
+            <Select name="property_type" value={formData.property_type} onChange={handleChange}>
+              <option value="">Wybierz typ</option>
+              <option value="plot">Działka</option>
+              <option value="house">Dom</option>
+              <option value="apartment">Mieszkanie</option>
+              <option value="investment">Inwestycje</option>
+              <option value="commercial">Lokale użytkowe</option>
+              <option value="warehouse">Hale i magazyny</option>
             </Select>
           </FormControl>
+        </GridItem>
 
-          <FormControl isRequired>
-            <FormLabel>Rodzaj oferty</FormLabel>
-            <Select
-              name="offerType"
-              value={formData.offerType}
-              onChange={handleInputChange}
-              placeholder="Wybierz rodzaj oferty"
-            >
-              {offerTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </Select>
-          </FormControl>
-
+        <GridItem>
           <FormControl isRequired>
             <FormLabel>Styl opisu</FormLabel>
-            <Select
-              name="style"
-              value={formData.style}
-              onChange={handleInputChange}
-              placeholder="Wybierz styl opisu"
-            >
-              {styles.map(style => (
-                <option key={style} value={style}>{style}</option>
-              ))}
+            <Select name="style" value={formData.style} onChange={handleChange}>
+              <option value="">Wybierz styl</option>
+              <option value="artistic">Artystyczny</option>
+              <option value="innovative">Innowacyjny</option>
+              <option value="classic">Klasyczny</option>
+              <option value="elegant">Elegancki</option>
+              <option value="investment">Inwestycyjny</option>
             </Select>
           </FormControl>
+        </GridItem>
 
+        <GridItem>
           <FormControl isRequired>
-            <FormLabel>Rynek</FormLabel>
-            <Select
-              name="marketType"
-              value={formData.marketType}
-              onChange={handleInputChange}
-              placeholder="Wybierz typ rynku"
-            >
-              {marketTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
+            <FormLabel>Lokalizacja</FormLabel>
+            <Input name="location" value={formData.location} onChange={handleChange} />
+          </FormControl>
+        </GridItem>
+
+        <GridItem>
+          <FormControl isRequired>
+            <FormLabel>Powierzchnia (m²)</FormLabel>
+            <NumberInput min={0}>
+              <NumberInputField name="area" value={formData.area} onChange={handleChange} />
+            </NumberInput>
+          </FormControl>
+        </GridItem>
+
+        <GridItem>
+          <FormControl>
+            <FormLabel>Liczba pokoi</FormLabel>
+            <NumberInput min={1}>
+              <NumberInputField name="rooms" value={formData.rooms} onChange={handleChange} />
+            </NumberInput>
+          </FormControl>
+        </GridItem>
+
+        <GridItem>
+          <FormControl>
+            <FormLabel>Piętro</FormLabel>
+            <NumberInput>
+              <NumberInputField name="floor" value={formData.floor} onChange={handleChange} />
+            </NumberInput>
+          </FormControl>
+        </GridItem>
+
+        <GridItem>
+          <FormControl>
+            <FormLabel>Rodzaj zabudowy</FormLabel>
+            <Select name="building_type" value={formData.building_type} onChange={handleChange}>
+              <option value="">Wybierz rodzaj</option>
+              <option value="block">Blok</option>
+              <option value="apartment">Apartamentowiec</option>
+              <option value="house">Dom wolnostojący</option>
+              <option value="semi_detached">Bliźniak</option>
+              <option value="terraced">Szeregowiec</option>
             </Select>
           </FormControl>
+        </GridItem>
 
-         
+        <GridItem>
+          <FormControl>
+            <FormLabel>Typ ogłoszeniodawcy</FormLabel>
+            <Select name="developer_type" value={formData.developer_type} onChange={handleChange}>
+              <option value="">Wybierz typ</option>
+              <option value="private">Prywatny</option>
+              <option value="developer">Deweloper</option>
+              <option value="agency">Agencja</option>
+            </Select>
+          </FormControl>
+        </GridItem>
 
-<SimpleGrid columns={{ base: 1, md: 2 }} spacing={6} w="full">
-  {/* Istniejące pola select */}
-  
-  <FormControl isRequired>
-    <FormLabel>Lokalizacja</FormLabel>
-    <Input
-      name="location"
-      value={formData.location}
-      onChange={handleInputChange}
-      placeholder="np. Warszawa, Mokotów"
-    />
-  </FormControl>
+        <GridItem>
+          <FormControl>
+            <FormLabel>Rok budowy</FormLabel>
+            <Input
+              type="number"
+              name="construction_year"
+              value={formData.construction_year}
+              onChange={handleChange}
+              placeholder="np. 2020"
+            />
+          </FormControl>
+        </GridItem>
 
-  <FormControl isRequired>
-    <FormLabel>Powierzchnia (m²)</FormLabel>
-    <Input
-      name="area"
-      type="number"
-      value={formData.area}
-      onChange={handleInputChange}
-      placeholder="np. 75"
-    />
-  </FormControl>
+        <GridItem>
+          <FormControl>
+            <FormLabel>Rynek</FormLabel>
+            <Select name="market_type" value={formData.market_type} onChange={handleChange}>
+              <option value="">Wybierz typ</option>
+              <option value="primary">Pierwotny</option>
+              <option value="secondary">Wtórny</option>
+            </Select>
+          </FormControl>
+        </GridItem>
 
-  <FormControl>
-    <FormLabel>Liczba pokoi</FormLabel>
-    <Input
-      name="rooms"
-      type="number"
-      value={formData.rooms}
-      onChange={handleInputChange}
-      placeholder="np. 3"
-    />
-  </FormControl>
+        <GridItem>
+          <FormControl>
+            <FormLabel>Cena za metr</FormLabel>
+            <NumberInput>
+              <NumberInputField
+                name="price_per_meter"
+                value={formData.price_per_meter}
+                onChange={handleChange}
+              />
+            </NumberInput>
+          </FormControl>
+        </GridItem>
 
-  <FormControl>
-    <FormLabel>Piętro</FormLabel>
-    <Input
-      name="floor"
-      value={formData.floor}
-      onChange={handleInputChange}
-      placeholder="np. 2 z 4"
-    />
-  </FormControl>
+        <GridItem>
+          <FormControl>
+            <FormLabel>Materiał budynku</FormLabel>
+            <Select name="building_material" value={formData.building_material} onChange={handleChange}>
+               <option value="">Wybierz materiał</option>
+               <option value="brick">Cegła</option>
+               <option value="wood">Drewno</option>
+               <option value="breeze_block">Pustak</option>
+               <option value="ceramic">Keramzyt</option>
+               <option value="large_plate">Wielka płyta</option>
+               <option value="concrete">Beton</option>
+               <option value="silicate">Silikat</option>
+               <option value="cellular_concrete">Beton komórkowy</option>
+               <option value="reinforced_concrete">Żelbet</option>
+              <option value="other">Inny</option>
+             </Select>
+          </FormControl>
+        </GridItem>
 
-  <FormControl>
-    <FormLabel>Rodzaj zabudowy</FormLabel>
-    <Input
-      name="buildingType"
-      value={formData.buildingType}
-      onChange={handleInputChange}
-      placeholder="np. Blok, Kamienica"
-    />
-  </FormControl>
+        <GridItem colSpan={2}>
+          <FormControl>
+            <FormLabel>Dodatkowe informacje</FormLabel>
+            <Textarea
+              name="additional_info"
+              value={formData.additional_info}
+              onChange={handleChange}
+              placeholder="Wprowadź dodatkowe informacje o nieruchomości..."
+              rows={4}
+            />
+          </FormControl>
+        </GridItem>
+      </Grid>
 
-  <FormControl>
-    <FormLabel>Rok budowy</FormLabel>
-    <Input
-      name="yearBuilt"
-      type="number"
-      value={formData.yearBuilt}
-      onChange={handleInputChange}
-      placeholder="np. 2010"
-    />
-  </FormControl>
-
-  <FormControl>
-    <FormLabel>Cena za metr (zł)</FormLabel>
-    <Input
-      name="pricePerMeter"
-      type="number"
-      value={formData.pricePerMeter}
-      onChange={handleInputChange}
-      placeholder="np. 8000"
-    />
-  </FormControl>
-
-  <FormControl>
-    <FormLabel>Materiał budynku</FormLabel>
-    <Input
-      name="buildingMaterial"
-      value={formData.buildingMaterial}
-      onChange={handleInputChange}
-      placeholder="np. Cegła"
-    />
-  </FormControl>
-</SimpleGrid>
-
-<FormControl>
-  <FormLabel>Dodatkowe informacje</FormLabel>
-  <Textarea
-    name="additionalInfo"
-    value={formData.additionalInfo}
-    onChange={handleInputChange}
-    placeholder="Dodatkowe informacje o nieruchomości..."
-    rows={4}
-  />
-</FormControl>
-
-          {/* ... */}
-        </SimpleGrid>
-
-        <Button
-          type="submit"
-          colorScheme="blue"
-          size="lg"
-          width="full"
-          isLoading={isLoading}
-        >
-          Generuj opis
-        </Button>
-      </VStack>
-
-      {generatedDescription && (
-        <Box mt={6} p={4} borderRadius="md" bg="gray.50">
-          <FormLabel mb={2}>Wygenerowany opis:</FormLabel>
-          <Box 
-            p={4} 
-            bg="white" 
-            borderRadius="md" 
-            border="1px" 
-            borderColor="gray.200"
-            whiteSpace="pre-wrap"
-          >
-            {generatedDescription}
-          </Box>
-          <Button
-            mt={4}
-            size="sm"
-            onClick={() => navigator.clipboard.writeText(generatedDescription)}
-          >
-            Kopiuj do schowka
-          </Button>
-        </Box>
-      )}
+      <Button
+        type="submit"
+        colorScheme="blue"
+        isLoading={isLoading}
+        width="100%"
+        mt={6}
+      >
+        Generuj opis
+      </Button>
     </Box>
   );
-}
+};

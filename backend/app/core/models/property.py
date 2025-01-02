@@ -3,7 +3,8 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import Optional
 from sqlalchemy import Column, Integer, String, Float, DateTime, Text
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.sql import func
+from app.core.database import Base
 from enum import Enum
 
 Base = declarative_base()
@@ -53,14 +54,35 @@ class PropertyDescription(Base):
     __tablename__ = "property_descriptions"
 
     id = Column(Integer, primary_key=True, index=True)
-    property_type = Column(String(50))
-    offer_type = Column(String(50))
-    style = Column(String(50))
-    location = Column(String(255))
+    property_type = Column(String)
+    offer_type = Column(String)
+    style = Column(String)
+    location = Column(String)
     area = Column(Float)
     description = Column(Text)
-    created_at = Column(DateTime, default=datetime.utcnow)
     rooms = Column(Integer, nullable=True)
-    floor = Column(String(50), nullable=True)
-    building_type = Column(String(100), nullable=True)
-    market_type = Column(String(50))
+    floor = Column(Integer, nullable=True)
+    building_type = Column(String, nullable=True)
+    developer_type = Column(String, nullable=True)
+    construction_year = Column(String, nullable=True)
+    market_type = Column(String, nullable=True)
+    price_per_meter = Column(Float, nullable=True)
+    building_material = Column(String, nullable=True)
+    additional_info = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    class PropertyGenerationRequest(BaseModel):
+    property_type: str
+    offer_type: Optional[str]
+    style: str
+    location: str
+    area: float
+    rooms: Optional[int] = None
+    floor: Optional[int] = None
+    building_type: Optional[str] = None
+    developer_type: Optional[str] = None
+    construction_year: Optional[str] = None
+    market_type: Optional[str] = None
+    price_per_meter: Optional[float] = None
+    building_material: Optional[str] = None
+    additional_info: Optional[str] = None

@@ -7,54 +7,51 @@ import {
   Input,
   VStack,
   useToast,
-  Text,
   Alert,
   AlertIcon,
 } from '@chakra-ui/react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../utils/api';
-import { useAuthStore } from '../../store/authStore';
 
-export const LoginForm = () => {
+export const RegisterForm = () => {
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   const navigate = useNavigate();
   const toast = useToast();
-  const setToken = useAuthStore(state => state.setToken);
-  const setUser = useAuthStore(state => state.setUser);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (password !== confirmPassword) {
+      setError('Hasła nie są identyczne');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const { access_token } = await authApi.login(email, password);
-      setToken(access_token);
+      await authApi.register(email, username, password);
       
-      // Pobierz dane użytkownika
-      const userData = await authApi.getCurrentUser();
-      setUser(userData);
-
       toast({
-        title: 'Zalogowano pomyślnie',
+        title: 'Konto utworzone pomyślnie',
+        description: 'Możesz się teraz zalogować',
         status: 'success',
         duration: 3000,
       });
       
-      navigate('/');
+      navigate('/login');
     } catch (error: any) {
-      // Sprawdź typ błędu
-      if (error.response?.status === 401) {
-        setError('Nieprawidłowy email lub hasło');
-      } else if (error.response?.status === 404) {
-        setError('Nie istnieje konto z podanym adresem email');
+      if (error.response?.status === 400) {
+        setError(error.response.data.detail || 'Błąd rejestracji');
       } else if (error.message === 'Network Error') {
-        setError('Problem z połączeniem z serwerem. Sprawdź czy backend jest uruchomiony.');
+        setError('Problem z połączeniem z serwerem');
       } else {
         setError('Wystąpił nieoczekiwany błąd');
       }
@@ -83,11 +80,28 @@ export const LoginForm = () => {
         </FormControl>
 
         <FormControl isRequired>
+          <FormLabel>Nazwa użytkownika</FormLabel>
+          <Input
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </FormControl>
+
+        <FormControl isRequired>
           <FormLabel>Hasło</FormLabel>
           <Input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+          />
+        </FormControl>
+
+        <FormControl isRequired>
+          <FormLabel>Potwierdź hasło</FormLabel>
+          <Input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
           />
         </FormControl>
 
@@ -97,7 +111,7 @@ export const LoginForm = () => {
           width="100%"
           isLoading={isLoading}
         >
-          Zaloguj się
+          Zarejestruj się
         </Button>
       </VStack>
     </Box>

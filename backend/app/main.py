@@ -1,35 +1,15 @@
-import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .config.settings import get_settings
-from app.api.endpoints import generation, history
+from app.api.endpoints.generation import router as generation_router
+from app.api.endpoints.history import router as history_router
 from app.api.endpoints.auth import router as auth_router
-from .core.database import engine
-from .core.models.property import Base
+from app.core.database import Base, engine
+from app.config import settings
 
 Base.metadata.create_all(bind=engine)
 
-# Konfiguracja logowania
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+app = FastAPI()
 
-# Inicjalizacja aplikacji
-app = FastAPI(
-    title="Real Estate Description Generator",
-    description="API do generowania opisów nieruchomości",
-    version="1.0.0"
-)
-
-# Inicjalizacja bazy danych
-logger.info("Tworzenie tabel bazy danych...")
-try:
-    Base.metadata.create_all(bind=engine)
-    logger.info("Tabele zostały utworzone pomyślnie")
-except Exception as e:
-    logger.error(f"Błąd podczas tworzenia tabel: {str(e)}")
-    raise
-
-# Konfiguracja CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -38,23 +18,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Podpięcie routerów
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
-app.include_router(generation.router, prefix="/api/v1", tags=["generation"])
-app.include_router(history.router, prefix="/api/v1", tags=["history"])
-
-# Endpointy
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
-
-@app.get("/test-settings")
-async def test_settings():
-    settings = get_settings()
-    return {
-        "api_key_exists": bool(settings.OPENAI_API_KEY),
-        "api_key_length": len(settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else 0
-    }
+app.include_router(generation_router, prefix="/generation", tags=["generation"])
+app.include_router(history_router, prefix="/history", tags=["history"])
 
 @app.get("/")
 def read_root():

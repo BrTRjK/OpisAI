@@ -1,17 +1,32 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.models.property import PropertyRequest, GeneratedDescription, PropertyDescription
+from app.core.models.property import PropertyGenerationRequest, PropertyDescription
 from app.core.services.description_generator import DescriptionGenerator
-from app.config.settings import get_settings
+from app.config import settings 
 import logging
+
+class PropertyGenerationRequest(BaseModel):
+    property_type: str
+    offer_type: Optional[str]
+    style: str
+    location: str
+    area: float
+    rooms: Optional[int] = None
+    floor: Optional[int] = None
+    building_type: Optional[str] = None
+    developer_type: Optional[str] = None
+    construction_year: Optional[str] = None
+    market_type: Optional[str] = None
+    price_per_meter: Optional[float] = None
+    building_material: Optional[str] = None
+    additional_info: Optional[str] = None
 
 # Konfiguracja logowania
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 router = APIRouter()
-settings = get_settings()
 
 async def get_generator():
     try:
@@ -22,7 +37,7 @@ async def get_generator():
 
 @router.post("/generate")
 async def generate_description(
-    property_data: PropertyRequest,
+    property_data: PropertyGenerationRequest,
     db: Session = Depends(get_db),
     generator: DescriptionGenerator = Depends(get_generator)
 ):

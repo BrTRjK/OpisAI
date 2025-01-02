@@ -11,7 +11,7 @@ logger.setLevel(logging.DEBUG)
 
 router = APIRouter()
 
-@router.get("/history")
+@router.get("")
 async def get_history(db: Session = Depends(get_db)):
     try:
         descriptions = db.query(PropertyDescription).order_by(PropertyDescription.created_at.desc()).all()

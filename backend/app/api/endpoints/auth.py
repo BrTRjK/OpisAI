@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security.jwt import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.core.security.password import verify_password, get_password_hash
-from app.core.models.user import User
+from app.core.models import User
 from app.core.schemas.user import UserCreate, User as UserSchema
 from app.core.database import get_db
 from jose import jwt, JWTError
