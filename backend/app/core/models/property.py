@@ -1,55 +1,31 @@
-# backend/app/models/property.py
-from datetime import datetime
-from pydantic import BaseModel, Field
-from typing import Optional
 from sqlalchemy import Column, Integer, String, Float, DateTime, Text
 from sqlalchemy.sql import func
 from app.core.database import Base
+from pydantic import BaseModel
+from typing import Optional, List
 from enum import Enum
 
-Base = declarative_base()
-
+# Enumy dla możliwych wartości
 class PropertyType(str, Enum):
-    PLOT = "Działka"
-    HOUSE = "Dom"
-    APARTMENT = "Mieszkanie"
-    INVESTMENT = "Inwestycje"
-    COMMERCIAL = "Lokale użytkowe"
-    WAREHOUSE = "Hale i magazyny"
+    APARTMENT = "apartment"
+    HOUSE = "house"
+    PLOT = "plot"
+    COMMERCIAL = "commercial"
+    WAREHOUSE = "warehouse"
+    INVESTMENT = "investment"
 
 class OfferType(str, Enum):
-    SALE = "Sprzedaż"
-    RENT = "Wynajem"
+    SALE = "sale"
+    RENT = "rent"
 
-class DescriptionStyle(str, Enum):
-    ARTISTIC = "Artystyczny"
-    INNOVATIVE = "Innowacyjny"
-    CLASSIC = "Klasyczny"
-    ELEGANT = "Elegancki"
-    INVESTMENT = "Inwestycyjny"
+class StyleType(str, Enum):
+    ARTISTIC = "artistic"
+    INNOVATIVE = "innovative"
+    CLASSIC = "classic"
+    ELEGANT = "elegant"
+    INVESTMENT = "investment"
 
-class PropertyRequest(BaseModel):
-    property_type: PropertyType
-    offer_type: OfferType
-    style: DescriptionStyle
-    location: str = Field(..., min_length=2)
-    area: float = Field(..., gt=0)
-    rooms: Optional[int] = Field(None, ge=1)
-    floor: Optional[str]
-    building_type: Optional[str]
-    advertiser_type: Optional[str]
-    year_built: Optional[int] = Field(None, ge=1800, le=2024)
-    market_type: str
-    price_per_meter: Optional[float] = Field(None, gt=0)
-    building_material: Optional[str]
-    additional_info: Optional[str]
-
-class GeneratedDescription(BaseModel):
-    description: str
-    style: DescriptionStyle
-    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
-
-
+# Model SQLAlchemy dla bazy danych
 class PropertyDescription(Base):
     __tablename__ = "property_descriptions"
 
@@ -71,10 +47,11 @@ class PropertyDescription(Base):
     additional_info = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    class PropertyGenerationRequest(BaseModel):
-    property_type: str
-    offer_type: Optional[str]
-    style: str
+# Pydantic models dla walidacji requestów
+class PropertyRequest(BaseModel):
+    property_type: PropertyType
+    offer_type: Optional[OfferType] = None
+    style: StyleType
     location: str
     area: float
     rooms: Optional[int] = None
@@ -86,3 +63,9 @@ class PropertyDescription(Base):
     price_per_meter: Optional[float] = None
     building_material: Optional[str] = None
     additional_info: Optional[str] = None
+
+class GeneratedDescription(BaseModel):
+    description: str
+    property_type: str
+    location: str
+    style: str
